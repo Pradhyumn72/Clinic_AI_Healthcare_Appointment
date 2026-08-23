@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}My Schedule{% endblock %}
+{% block meta_description %}View and manage your upcoming patient appointments on ClinicAI.{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+  <h1>My Schedule</h1>
+  <p>Your upcoming patient appointments.</p>
+</div>
+
+{% if appointments %}
+  <div class="appt-list">
+    {% for appt in appointments %}
+      <div class="appt-card" id="appt-card-{{ appt.pk }}">
+        <div class="appt-card__time">
+          <span class="appt-card__date">{{ appt.date|date:"M d, Y" }}</span>
+          <span class="appt-card__slot">{{ appt.start_time|time:"H:i" }} – {{ appt.end_time|time:"H:i" }}</span>
+        </div>
+        <div class="appt-card__info">
+          <span class="appt-card__doctor">
+            {{ appt.patient.get_full_name|default:appt.patient.username }}
+          </span>
+          <span class="appt-card__spec">Patient</span>
+        </div>
+        <div class="appt-card__status">
+          <span class="status-badge status-badge--{{ appt.status }}">
+            {{ appt.get_status_display }}
+          </span>
+        </div>
+        <div class="appt-card__actions">
+          {% if appt.status == "held" or appt.status == "confirmed" %}
+            <form method="post" action="{% url 'appointments:cancel_appointment' appointment_id=appt.pk %}" style="display:inline;">
+              {% csrf_token %}
+              <button
+                type="submit"
+                class="btn-cancel"
+                onclick="return confirm('Cancel this appointment?')"
+              >Cancel</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="coming-soon-banner">
+    <h2>No upcoming appointments</h2>
+    <p>Your schedule is clear for now.</p>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .appt-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .appt-card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.5rem;
+    transition: border-color var(--transition);
+    flex-wrap: wrap;
+  }
+  .appt-card:hover { border-color: var(--color-primary); }
+  .appt-card__time {
+    display: flex;
+    flex-direction: column;
+    min-width: 130px;
+  }
+  .appt-card__date {
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  .appt-card__slot {
+    font-size: 0.85rem;
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+  .appt-card__info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 160px;
+  }
+  .appt-card__doctor {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .appt-card__spec {
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+  }
+  .appt-card__status {
+    min-width: 100px;
+    text-align: center;
+  }
+  .appt-card__actions { min-width: 80px; text-align: right; }
+
+  .status-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 99px;
+    border: 1px solid;
+  }
+  .status-badge--held {
+    background: rgba(255, 212, 59, 0.12);
+    border-color: rgba(255, 212, 59, 0.3);
+    color: var(--color-warning);
+  }
+  .status-badge--confirmed {
+    background: rgba(81, 207, 102, 0.12);
+    border-color: rgba(81, 207, 102, 0.3);
+    color: var(--color-success);
+  }
+  .status-badge--cancelled,
+  .status-badge--leave_cancelled {
+    background: rgba(255, 107, 107, 0.12);
+    border-color: rgba(255, 107, 107, 0.3);
+    color: var(--color-danger);
+  }
+  .status-badge--completed {
+    background: rgba(79, 142, 247, 0.12);
+    border-color: rgba(79, 142, 247, 0.3);
+    color: var(--color-primary);
+  }
+  .btn-cancel {
+    background: none;
+    border: 1px solid var(--color-danger);
+    color: var(--color-danger);
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-cancel:hover {
+    background: var(--color-danger);
+    color: #fff;
+  }
+</style>
+{% endblock %}

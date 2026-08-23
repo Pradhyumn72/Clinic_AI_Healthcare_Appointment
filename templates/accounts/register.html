@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account{% endblock %}
+{% block meta_description %}Create a patient account on ClinicAI to book and manage your healthcare appointments.{% endblock %}
+
+{% block content %}
+<div class="card card--narrow">
+
+  <div class="card__header">
+    <h1>Create your account</h1>
+    <p>Join ClinicAI to book and manage appointments with ease.</p>
+  </div>
+
+  <form method="post" action="{% url 'accounts:register' %}" novalidate>
+    {% csrf_token %}
+
+    <!-- Non-field errors -->
+    {% if form.non_field_errors %}
+      <ul class="messages">
+        {% for error in form.non_field_errors %}
+          <li class="alert alert--error">✕ {{ error }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <!-- First name / Last name — side by side -->
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label for="{{ form.first_name.id_for_label }}">First name</label>
+        {{ form.first_name }}
+        {{ form.first_name.errors }}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.last_name.id_for_label }}">Last name</label>
+        {{ form.last_name }}
+        {{ form.last_name.errors }}
+      </div>
+    </div>
+
+    <!-- Username -->
+    <div class="form-group">
+      <label for="{{ form.username.id_for_label }}">Username</label>
+      {{ form.username }}
+      {% if form.username.help_text %}
+        <p class="help-text">{{ form.username.help_text }}</p>
+      {% endif %}
+      {{ form.username.errors }}
+    </div>
+
+    <!-- Email -->
+    <div class="form-group">
+      <label for="{{ form.email.id_for_label }}">Email address</label>
+      {{ form.email }}
+      {{ form.email.errors }}
+    </div>
+
+    <!-- Phone / DOB -->
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label for="{{ form.phone_number.id_for_label }}">Phone</label>
+        {{ form.phone_number }}
+        <p class="help-text">Optional</p>
+        {{ form.phone_number.errors }}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.date_of_birth.id_for_label }}">Date of birth</label>
+        {{ form.date_of_birth }}
+        <p class="help-text">Optional</p>
+        {{ form.date_of_birth.errors }}
+      </div>
+    </div>
+
+    <!-- Password -->
+    <div class="form-group">
+      <label for="{{ form.password1.id_for_label }}">Password</label>
+      {{ form.password1 }}
+      {% if form.password1.help_text %}
+        <p class="help-text">{{ form.password1.help_text }}</p>
+      {% endif %}
+      {{ form.password1.errors }}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.password2.id_for_label }}">Confirm password</label>
+      {{ form.password2 }}
+      {{ form.password2.errors }}
+    </div>
+
+    <button type="submit" id="register-submit-btn" class="btn btn--primary">
+      Create patient account
+    </button>
+
+  </form>
+
+  <hr class="divider" />
+
+  <p class="text-center text-muted">
+    Already have an account?
+    <a href="{% url 'accounts:login' %}">Sign in</a>
+  </p>
+
+</div>
+{% endblock %}

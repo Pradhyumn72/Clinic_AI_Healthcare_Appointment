@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In{% endblock %}
+{% block meta_description %}Sign in to your ClinicAI account to manage your appointments and health records.{% endblock %}
+
+{% block content %}
+<div class="card card--narrow">
+
+  <div class="card__header">
+    <h1>Welcome back</h1>
+    <p>Sign in to your ClinicAI account.</p>
+  </div>
+
+  <form method="post" action="{% url 'accounts:login' %}" novalidate>
+    {% csrf_token %}
+
+    <!-- Display next parameter so Django redirects correctly after login -->
+    {% if next %}
+      <input type="hidden" name="next" value="{{ next }}" />
+    {% endif %}
+
+    <!-- Non-field / credential errors -->
+    {% if form.non_field_errors %}
+      <ul class="messages">
+        {% for error in form.non_field_errors %}
+          <li class="alert alert--error">✕ {{ error }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <!-- Username -->
+    <div class="form-group">
+      <label for="{{ form.username.id_for_label }}">Username</label>
+      {{ form.username }}
+      {{ form.username.errors }}
+    </div>
+
+    <!-- Password -->
+    <div class="form-group">
+      <label for="{{ form.password.id_for_label }}">Password</label>
+      {{ form.password }}
+      {{ form.password.errors }}
+    </div>
+
+    <button type="submit" id="login-submit-btn" class="btn btn--primary">
+      Sign in
+    </button>
+
+  </form>
+
+  <hr class="divider" />
+
+  <p class="text-center text-muted">
+    Don't have an account?
+    <a href="{% url 'accounts:register' %}">Register as a patient</a>
+  </p>
+
+</div>
+{% endblock %}

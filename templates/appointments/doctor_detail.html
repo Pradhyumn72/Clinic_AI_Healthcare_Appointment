@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Dr. {{ doctor.user.get_full_name|default:doctor.user.username }} — Book Appointment{% endblock %}
+{% block meta_description %}Book an appointment with Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}, {{ doctor.specialisation }}.{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'appointments:doctor_search' %}" style="font-size:0.9rem;">← Back to search</a>
+</div>
+
+<!-- Doctor info card -->
+<div class="card" style="margin-bottom:2rem;">
+  <div style="display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;">
+    <div class="doctor-avatar">
+      {{ doctor.user.first_name|first|default:"D" }}{{ doctor.user.last_name|first|default:"r" }}
+    </div>
+    <div style="flex:1;min-width:200px;">
+      <h1 style="font-size:1.5rem;font-weight:700;letter-spacing:-0.03em;">
+        Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}
+      </h1>
+      <p style="color:var(--color-secondary);font-weight:500;margin-top:0.15rem;">
+        {{ doctor.specialisation }}
+      </p>
+      <p style="color:var(--color-text-muted);font-size:0.85rem;margin-top:0.25rem;">
+        🕐 {{ doctor.working_hours_start|time:"H:i" }} – {{ doctor.working_hours_end|time:"H:i" }}
+        · {{ doctor.slot_duration_minutes }}min slots
+      </p>
+      {% if doctor.bio %}
+        <p style="color:var(--color-text-muted);font-size:0.88rem;margin-top:0.5rem;line-height:1.5;">
+          {{ doctor.bio }}
+        </p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Slot picker -->
+<div class="card" id="slot-picker-card">
+  <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:1rem;letter-spacing:-0.02em;">
+    📅 Pick a date & time
+  </h2>
+
+  <div class="form-group">
+    <label for="slot-date">Appointment date</label>
+    <input type="date" id="slot-date" />
+  </div>
+
+  <div id="slots-container" style="margin-top:1rem;">
+    <p class="text-muted">Select a date above to see available time slots.</p>
+  </div>
+</div>
+
+<!-- Hidden booking form (submitted by JS when a slot button is clicked) -->
+<form method="post" action="{% url 'appointments:book_slot' %}" id="book-form" style="display:none;">
+  {% csrf_token %}
+  <input type="hidden" name="doctor_id" value="{{ doctor.pk }}" />
+  <input type="hidden" name="date" id="book-date" />
+  <input type="hidden" name="start_time" id="book-time" />
+</form>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .doctor-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .slots-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+  }
+  .slot-btn {
+    background: var(--color-surface-alt);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.55rem 1.1rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  }
+  .slot-btn:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 12px rgba(79, 142, 247, 0.3);
+  }
+  .slot-btn:active { transform: translateY(0); }
+  .slots-loading {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+  }
+  .slots-empty {
+    color: var(--color-warning);
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const dateInput = document.getElementById("slot-date");
+  const slotsContainer = document.getElementById("slots-container");
+  const bookForm = document.getElementById("book-form");
+  const bookDate = document.getElementById("book-date");
+  const bookTime = document.getElementById("book-time");
+  const doctorId = {{ doctor.pk }};
+  const slotsUrl = "{% url 'appointments:available_slots' %}";
+
+  // Set min date to today
+  const today = new Date().toISOString().split("T")[0];
+  dateInput.setAttribute("min", today);
+
+  dateInput.addEventListener("change", async function () {
+    const date = this.value;
+    if (!date) return;
+
+    slotsContainer.innerHTML = '<p class="slots-loading">⏳ Loading available slots…</p>';
+
+    try {
+      const resp = await fetch(`${slotsUrl}?doctor_id=${doctorId}&date=${date}`);
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        slotsContainer.innerHTML = `<p class="slots-empty">⚠ ${data.error || "Could not load slots."}</p>`;
+        return;
+      }
+
+      if (data.slots.length === 0) {
+        slotsContainer.innerHTML = '<p class="slots-empty">No available slots for this date. The doctor may be on leave or fully booked.</p>';
+        return;
+      }
+
+      let html = '<p style="color:var(--color-text-muted);font-size:0.85rem;">Click a time to hold your slot:</p>';
+      html += '<div class="slots-grid">';
+      for (const slot of data.slots) {
+        html += `<button type="button" class="slot-btn" data-time="${slot}">${slot}</button>`;
+      }
+      html += "</div>";
+      slotsContainer.innerHTML = html;
+
+      // Attach click handlers
+      slotsContainer.querySelectorAll(".slot-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (!confirm(`Hold the ${btn.dataset.time} slot for Dr. {{ doctor.user.get_full_name|default:doctor.user.username }}?`)) return;
+          bookDate.value = date;
+          bookTime.value = btn.dataset.time;
+          bookForm.submit();
+        });
+      });
+    } catch (err) {
+      slotsContainer.innerHTML = '<p class="slots-empty">⚠ Network error. Please try again.</p>';
+    }
+  });
+})();
+</script>
+{% endblock %}

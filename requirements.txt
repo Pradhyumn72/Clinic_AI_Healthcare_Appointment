@@ -1,0 +1,13 @@
+# Core framework
+django
+
+# Anthropic LLM SDK (used when MOCK_LLM=False)
+anthropic
+
+# Google Calendar / OAuth2 integration
+google-auth
+google-auth-oauthlib
+google-api-python-client
+
+# Background task scheduling (e.g. slot-hold expiry, notification retries)
+apscheduler

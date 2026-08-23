@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Dashboard{% endblock %}
+{% block meta_description %}Your ClinicAI doctor dashboard — manage appointments and consultations.{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+  <h1>Doctor Dashboard</h1>
+  <p>Hello, Dr. <strong>{{ user.last_name|default:user.username }}</strong>! Your schedule hub.</p>
+</div>
+
+<!-- Placeholder stat cards -->
+<div class="stat-grid">
+  <div class="stat-card">
+    <span class="stat-card__label">Today's Appointments</span>
+    <span class="stat-card__value">—</span>
+    <span class="stat-card__sub">Coming soon</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-card__label">Pending Reviews</span>
+    <span class="stat-card__value">—</span>
+    <span class="stat-card__sub">Coming soon</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-card__label">Active Patients</span>
+    <span class="stat-card__value">—</span>
+    <span class="stat-card__sub">Coming soon</span>
+  </div>
+</div>
+
+<div class="coming-soon-banner">
+  <h2>🚧 Full dashboard coming soon</h2>
+  <p>Appointment management, consultation notes, and patient records will appear here in a later step.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Find a Doctor{% endblock %}
+{% block meta_description %}Search for doctors by specialisation and book an appointment on ClinicAI.{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+  <h1>Find a Doctor</h1>
+  <p>Search by specialisation and book your appointment.</p>
+</div>
+
+<!-- Search bar -->
+<div class="card" style="margin-bottom:2rem;padding:1.25rem 2rem;">
+  <form method="get" action="{% url 'appointments:doctor_search' %}" style="display:flex;gap:0.75rem;align-items:flex-end;">
+    <div class="form-group" style="flex:1;margin-bottom:0;">
+      <label for="search-specialisation">Specialisation</label>
+      <input
+        type="text"
+        id="search-specialisation"
+        name="q"
+        value="{{ query }}"
+        placeholder="e.g. Cardiology, Dermatology…"
+      />
+    </div>
+    <button type="submit" class="btn btn--primary" style="width:auto;margin-top:0;padding:0.65rem 1.5rem;">
+      Search
+    </button>
+  </form>
+</div>
+
+<!-- Results -->
+{% if doctors %}
+  <div class="doctor-grid">
+    {% for doc in doctors %}
+      <a href="{% url 'appointments:doctor_detail' doctor_id=doc.pk %}" class="doctor-card" id="doctor-card-{{ doc.pk }}">
+        <div class="doctor-card__avatar">
+          {{ doc.user.first_name|first|default:"D" }}{{ doc.user.last_name|first|default:"r" }}
+        </div>
+        <div class="doctor-card__info">
+          <h3 class="doctor-card__name">
+            Dr. {{ doc.user.get_full_name|default:doc.user.username }}
+          </h3>
+          <span class="doctor-card__spec">{{ doc.specialisation }}</span>
+          <span class="doctor-card__hours">
+            🕐 {{ doc.working_hours_start|time:"H:i" }} – {{ doc.working_hours_end|time:"H:i" }}
+            · {{ doc.slot_duration_minutes }}min slots
+          </span>
+          {% if doc.bio %}
+            <p class="doctor-card__bio">{{ doc.bio|truncatewords:20 }}</p>
+          {% endif %}
+        </div>
+        <span class="doctor-card__arrow">→</span>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="coming-soon-banner">
+    <h2>No doctors found</h2>
+    {% if query %}
+      <p>No active doctors match "<strong>{{ query }}</strong>". Try a different search term.</p>
+    {% else %}
+      <p>No active doctors are currently available. Check back soon.</p>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .doctor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1rem;
+  }
+  .doctor-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1.5rem;
+    transition: border-color var(--transition), transform var(--transition);
+    color: inherit;
+    text-decoration: none;
+  }
+  .doctor-card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+    color: inherit;
+  }
+  .doctor-card__avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #fff;
+    flex-shrink: 0;
+    letter-spacing: -0.02em;
+  }
+  .doctor-card__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+    min-width: 0;
+  }
+  .doctor-card__name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .doctor-card__spec {
+    color: var(--color-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  .doctor-card__hours {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+  }
+  .doctor-card__bio {
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+    margin-top: 0.25rem;
+    line-height: 1.4;
+  }
+  .doctor-card__arrow {
+    font-size: 1.3rem;
+    color: var(--color-text-muted);
+    transition: color var(--transition), transform var(--transition);
+    flex-shrink: 0;
+  }
+  .doctor-card:hover .doctor-card__arrow {
+    color: var(--color-primary);
+    transform: translateX(3px);
+  }
+</style>
+{% endblock %}
